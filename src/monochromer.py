@@ -113,7 +113,7 @@ class Monochromer:
                 else:
                     rgb_im.putpixel((x,y), (255,255,255))
 
-        self.image.save("kalle.png")
+        return self.image
 
 
 if __name__ == "__main__":
