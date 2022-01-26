@@ -21,6 +21,8 @@ class Conversion:
             self.convertPixel = self._convertRightSlant
         elif type == "leftslant":
             self.convertPixel = self._convertLeftlant
+        elif type == "solid":
+            self.convertPixel = self._convertSolid
 
     def _convertVertical(self, coordinates):
         x,y = coordinates
@@ -59,6 +61,10 @@ class Conversion:
 
         return (r,g,b)
 
+    def _convertSolid(self, coordinates):
+        x,y = coordinates
+        return (0,0,0)
+
     def _convertLeftlant(self, coordinates):
         x,y = coordinates
         r,g,b = (0,0,0)
@@ -72,7 +78,12 @@ class Monochromer:
     def __init__(self, filename, conversions):
         self.conversions = {}
 
+        # XX% darkness -> black
+        self.black_limit = 0.94
+
         self.image = Image.open(filename)
+        if self.image.height > 480:
+            self.image = self.image.crop((0, self.image.height - 480, self.image.width, self.image.height))
         for x in conversions:
             cur = self._parseConversion(x)
             self.conversions[cur.color] = cur
@@ -83,7 +94,7 @@ class Monochromer:
             raise Exception("Need color=type")
         color = parts[0]
         type = parts[1]
-        if type not in ["horizontal", "vertical", "leftslant", "rightslant", "dotted"]:
+        if type not in ["horizontal", "vertical", "leftslant", "rightslant", "dotted", "solid"]:
             raise Exception("type {} is wrong".format(type))
 
         return Conversion(self.image, color, type)
@@ -97,6 +108,10 @@ class Monochromer:
                 if (r,g,b) in self.conversions:
                     cur = self.conversions[(r,g,b)]
                     rgb_im.putpixel((x,y), cur.convertPixel((x,y)))
+                elif ( r + g + b) / 3 < 255 * self.black_limit:
+                    rgb_im.putpixel((x,y), (0,0,0))
+                else:
+                    rgb_im.putpixel((x,y), (255,255,255))
 
         self.image.save("kalle.png")
 
@@ -108,7 +123,7 @@ if __name__ == "__main__":
             "Where conversions are lists of\n"
             "   RRGGBB=type\n\n"
             "Colors are given in hex, type is one of\n"
-            "horizontal, vertical, leftslant, rightslant, dotted\n")
+            "horizontal, vertical, leftslant, rightslant, dotted, solid\n")
         sys.exit(1)
 
     m = Monochromer(sys.argv[1], sys.argv[2:])
