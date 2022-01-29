@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  web-to-image:
+    image: simonkagstrom/web-to-image:latest
+    restart: always
+    environment:
+      - DST_DIR="/mnt/"
+      - URLS="http://192.168.1.164:8123/lovelace/home http://192.168.1.164:8123/energy"
+    volumes:
+      - "image-dir:/mnt/"
+
+  epaper-home-assistant-display:
+    image: simonkagstrom/epaper-home-assistant-display:latest
+    restart: always
+    privileged: true
+    environment:
+      - SRC_DIR="/mnt/"
+      - CONVERSIONS="db4437=horizontal 43a047=dotted ffa600=rightslant 03a9f4=solid 7f7f7f=rightslant"
+    volumes:
+      - "image-dir:/mnt/"
+
+volumes:
+  image_dir:

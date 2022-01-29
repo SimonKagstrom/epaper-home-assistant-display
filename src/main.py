@@ -19,9 +19,9 @@ if __name__ == "__main__":
 
         path = sys.argv[1]
         conversions = sys.argv[2].split()
-        if not Path("{}/0.png".format(path)).is_file:
-            print("Need 0.png (and possible 1...X.png) in {}".format(path))
-            sys.exit(1)
+        while not Path("{}/0.png".format(path)).is_file:
+            print("Need 0.png (and possible 1...X.png) in {}. Waiting...".format(path))
+            time.sleep(1)
 
         epd = display.EPD()
 
