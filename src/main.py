@@ -29,34 +29,36 @@ if __name__ == "__main__":
         epd.Clear()
         powered = True
 
-        cur_image = 0
-
         while True:
-            imageName = "{}/{}.png".format(path, cur_image)
-            if not Path(imageName).is_file:
-                cur_image = 0
-                if not Path("{}/0.png".format(path)).is_file:
-                    print("0.png removed??")
-                    sys.exit(1)
-                continue
+            images = []
 
-            m = monochromer.Monochromer(imageName, conversions)
-            Himage = m.process()
+            for i in range(0, 10):
+                imageName = "{}/{}.png".format(path, i)
+                if os.path.exists(imageName):
+                    m = monochromer.Monochromer(imageName, conversions)
+                    images.append(m.process())
 
-            epd.display(epd.getbuffer(Himage))
+            if len(images) == 0:
+                print("0.png removed??")
+                sys.exit(1)
 
-            powered = True
+            for img in images:
+                epd.display(epd.getbuffer(img))
+                time.sleep(10)
+
+            # This is the default display
+            epd.display(epd.getbuffer(images[0]))
+
+            powered = False
+            epd.sleep()
             for i in range(0, 5 * 60):
-                # Power down after 10 seconds
-                if powered and i == 10:
-                    epd.sleep()
-                    powered = False
                 # check sensor here for next image display
                 if False:
-                    cur_image = cur_image + 1
+                    pass
                 time.sleep(1)
 
             if not powered:
+                powered = True
                 epd.init()
 
     except IOError as e:
