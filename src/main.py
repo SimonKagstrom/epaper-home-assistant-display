@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import time
 from PIL import Image
+from RPi import GPIO
 
 import monochromer
 
@@ -29,6 +30,11 @@ if __name__ == "__main__":
         epd.Clear()
         powered = True
 
+        MOTION_PIN = 26
+        GPIO.setup(MOTION_PIN, GPIO.IN)
+
+        cur_image = 0
+
         while True:
             images = []
 
@@ -42,19 +48,25 @@ if __name__ == "__main__":
                 print("0.png removed??")
                 sys.exit(1)
 
-            for img in images:
-                epd.display(epd.getbuffer(img))
-                time.sleep(10)
-
             # This is the default display
-            epd.display(epd.getbuffer(images[0]))
+            epd.display(epd.getbuffer(images[cur_image]))
+            cur_image = cur_image + 1
 
             powered = False
             epd.sleep()
             for i in range(0, 5 * 60):
-                # check sensor here for next image display
-                if False:
-                    pass
+
+                if GPIO.input(MOTION_PIN):
+                    if cur_image >= len(images):
+                        cur_image = 0
+                    if not powered:
+                        powered = True
+                        epd.init()
+                    epd.display(epd.getbuffer(images[cur_image]))
+                    cur_image = cur_image + 1
+                    powered = False
+                    epd.sleep()
+                    time.sleep(10)
                 time.sleep(1)
 
             if not powered:
