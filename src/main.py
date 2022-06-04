@@ -70,7 +70,6 @@ def file_conversion(path : str, conversions: list, out_queue : queue.Queue):
 
 def wait_for_motion(out_queue : queue.Queue):
     while True:
-        GPIO.setup(MOTION_PIN, GPIO.IN)
         if GPIO.input(MOTION_PIN):
             out_queue.put(True)
         time.sleep(0.25)
