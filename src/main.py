@@ -126,7 +126,7 @@ def display_loop(epd : display.EPD, file_queue : queue.Queue, motion_queue : que
         if not motion and time_diff > 20 and epd.is_powered:
             power_down(epd)
 
-        if not motion and time_diff < 1 * 60:
+        if not motion and time_diff < 5 * 60:
             continue
 
         if motion and time_diff < 1:
