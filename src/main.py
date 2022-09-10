@@ -46,7 +46,7 @@ class StatCache:
     def present_files(self):
         return self.stat_cache.keys()
 
-def file_conversion(path : str, conversions: list, out_queue : queue.Queue):
+def file_conversion(epd : display.EPD, path : str, conversions: list, out_queue : queue.Queue):
     image_names = []
 
     for i in range(0, 20):
@@ -62,7 +62,9 @@ def file_conversion(path : str, conversions: list, out_queue : queue.Queue):
 
         for f in files:
             m = monochromer.Monochromer(f, conversions)
-            images.append(m.process())
+            cur = epd.getbuffer(m.process())
+
+            images.append(cur)
 
         logging.info("converted {}".format(files))
         out_queue.put(images)
@@ -75,8 +77,8 @@ def wait_for_motion(out_queue : queue.Queue):
         time.sleep(0.25)
 
 
-def display_image(epd, image : Image):
-    epd.display(epd.getbuffer(image))
+def display_image(epd, image):
+    epd.display(image)
 
 def power_down(epd : display.EPD):
     logging.info("power down")
@@ -166,7 +168,7 @@ if __name__ == '__main__':
     file_queue = queue.Queue(1)
 
     motion_process = threading.Thread(target=wait_for_motion, args=(motion_queue,))
-    file_conversion_process = threading.Thread(target=file_conversion, args=(path, conversions, file_queue))
+    file_conversion_process = threading.Thread(target=file_conversion, args=(epd, path, conversions, file_queue))
     display_process = threading.Thread(target=display_loop, args=(epd, file_queue, motion_queue))
 
     try:
