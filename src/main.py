@@ -92,7 +92,11 @@ def power_up(epd : display.EPD):
     epd.is_powered = True
 
 
+watchdog_counter = 0
+
 def display_loop(epd : display.EPD, file_queue : queue.Queue, motion_queue : queue.Queue):
+
+    global watchdog_counter
 
     # Wait for an initial set of converted images
     converted = file_queue.get()
@@ -138,12 +142,23 @@ def display_loop(epd : display.EPD, file_queue : queue.Queue, motion_queue : que
         cur = cur + 1
         if cur >= len(converted):
             cur = 0
+        watchdog_counter = watchdog_counter + 1
 
         # Change to the next image and display
         power_up(epd)
         logging.info("display {}, with motion {} and time diff {}".format(cur, motion, time_diff))
         display_image(epd, converted[cur])
         change_timestamp = time.process_time()
+
+def run_watchdog():
+    global watchdog_counter
+
+    before = watchdog_counter
+    while True:
+        time.sleep(11 * 60)
+        if watchdog_counter == before:
+            sys.exit(1)
+        before = watchdog_counter
 
 
 if __name__ == '__main__':
@@ -167,6 +182,7 @@ if __name__ == '__main__':
     motion_queue = queue.Queue(1)
     file_queue = queue.Queue(1)
 
+    watchdog = threading.Thread(target=run_watchdog)
     motion_process = threading.Thread(target=wait_for_motion, args=(motion_queue,))
     file_conversion_process = threading.Thread(target=file_conversion, args=(epd, path, conversions, file_queue))
     display_process = threading.Thread(target=display_loop, args=(epd, file_queue, motion_queue))
