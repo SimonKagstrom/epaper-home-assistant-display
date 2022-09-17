@@ -83,12 +83,14 @@ public:
         m_current = 0;
         bool motionChange = false;
         auto before = 100u;
+        auto sleepAfterDraw = true;
         while (true)
         {
             auto delta = 0u;
             if (motionChange && m_motionSensor->hasMotion())
             {
                 delta = 1;
+                sleepAfterDraw = false;
             }
             else if (!motionChange) // timeout
             {
@@ -96,6 +98,7 @@ public:
 
                 // Skip to the next image
                 delta = 1;
+                sleepAfterDraw = true;
             }
 
             m_current = (m_current + delta) % m_files.size();
@@ -105,6 +108,11 @@ public:
                 if (auto img = m_converter->getImage(m_files[m_current]))
                 {
                     m_display->drawImage(*img);
+                }
+
+                if (sleepAfterDraw)
+                {
+                    m_display->sleep();
                 }
             }
 
