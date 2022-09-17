@@ -5,6 +5,7 @@ RUN apk add --no-cache python3 py3-pip wiringpi fmt
 
 ENV BUILD_DEPS="build-base \
                 cmake \
+                make \
                 g++ \
                 python3-dev \
                 jpeg-dev \
@@ -14,19 +15,23 @@ ENV BUILD_DEPS="build-base \
 "
 
 RUN apk add --no-cache zlib-dev
-RUN apk add --no-cache --virtual .build-deps ${BUILD_DEPS}
+RUN apk add --no-cache ${BUILD_DEPS}
 
 ENV LIBRARY_PATH=/lib:/usr/lib
-RUN python3 -m pip install --upgrade pip
-RUN pip3 install pillow spidev RPi.GPIO
+#RUN python3 -m pip install --upgrade pip
+#RUN pip3 install pillow spidev RPi.GPIO
 
 RUN wget -O /tmp/CImg_latest.zip http://cimg.eu/files/CImg_latest.zip && cd /tmp/ && unzip CImg_latest.zip && cp CImg-*/CImg.h /usr/include/
 
+# For the waveshare library
 RUN echo "Raspbian          " > /etc/issue
 
-#RUN apk del ${BUILD_DEPS}
+ADD . /src
+RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make
+RUN cp /tmp/build/epaper-display /usr/bin
 
-COPY waveshare-lib/RaspberryPi_JetsonNano/python/lib/ /usr/lib/python3.8
-COPY src/* /app/
+RUN apk del ${BUILD_DEPS}
+RUN apk add --no-cache libpng
+RUN rm -rf /src /tmp/build /usr/include/
 
-CMD python3 /app/main.py ${SRC_DIR} "${CONVERSIONS}"
+CMD /usr/bin/epaper-display ${SRC_DIR} "${CONVERSIONS}"
