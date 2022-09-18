@@ -116,7 +116,7 @@ public:
                 }
             }
 
-            motionChange = m_motionSemaphore.try_acquire_for(3min);
+            motionChange = m_motionSemaphore.try_acquire_for(10min);
             before = m_current;
         }
     }
