@@ -82,7 +82,6 @@ public:
 
         m_current = 0;
         bool motionChange = false;
-        auto before = 100u;
         auto sleepAfterDraw = true;
         while (true)
         {
@@ -103,21 +102,29 @@ public:
 
             m_current = (m_current + delta) % m_files.size();
 
-            if (m_current != before)
+            if (auto img = m_converter->getImage(m_files[m_current]))
             {
-                if (auto img = m_converter->getImage(m_files[m_current]))
+                m_display->drawImage(*img);
+            }
+
+            if (sleepAfterDraw)
+            {
+                m_display->sleep();
+            }
+            else
+            {
+                motionChange = m_motionSemaphore.try_acquire_for(10s);
+                if (motionChange)
                 {
-                    m_display->drawImage(*img);
+                    // Movement, so go to next
+                    continue;
                 }
 
-                if (sleepAfterDraw)
-                {
-                    m_display->sleep();
-                }
+                // Otherwise sleep
+                m_display->sleep();
             }
 
             motionChange = m_motionSemaphore.try_acquire_for(10min);
-            before = m_current;
         }
     }
 
