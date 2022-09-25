@@ -34,8 +34,11 @@ public:
 
         m_updateThread = std::thread([this]()
         {
-            std::this_thread::sleep_for(1min);
-            updateFiles();
+            while (true)
+            {
+                std::this_thread::sleep_for(1min);
+                updateFiles();
+            }
         });
     }
 
