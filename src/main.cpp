@@ -12,8 +12,6 @@
 #include <stdio.h>
 
 #include <unistd.h>
-#include <mutex>
-#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -23,70 +21,45 @@ namespace
 class Converter
 {
 public:
-    using IndexToRaw = std::map<unsigned, std::vector<uint8_t>>;
-
     explicit Converter(const std::filesystem::path &directory, const std::vector<std::string> &conversions) :
         m_monitor(IFilesystemMonitor::create(directory)),
         m_conversions(conversions)
     {
-        // Get an initial update
-        updateFiles();
-
-        m_updateThread = std::thread([this]()
-        {
-            std::this_thread::sleep_for(1min);
-            updateFiles();
-        });
     }
 
-    const std::shared_ptr<IndexToRaw> getImages()
+    std::vector<std::filesystem::path> updateFiles()
     {
-        std::lock_guard lock(m_mutex);
+        auto out = std::vector<std::filesystem::path>();
 
-        return m_currentImages;
+        for (auto &cur : m_monitor->getUpdatedFiles())
+        {
+            m_processor[cur] = IMonochromer::create(cur, m_conversions);
+            m_imageData[cur] = m_processor[cur]->process();
+        }
+
+        for (const auto &[k,v] : m_imageData)
+        {
+            out.push_back(k);
+        }
+
+        return out;
+    }
+
+    std::optional<std::span<uint8_t>> getImage(const std::filesystem::path &image)
+    {
+        if (m_imageData.contains(image))
+        {
+            return m_imageData[image];
+        }
+        return {};
     }
 
 private:
-    void updateFiles()
-    {
-        std::map<std::filesystem::path, std::span<uint8_t>> updatedImageData;
-
-        auto updated = m_monitor->getUpdatedFiles();
-        if (updated.empty())
-        {
-            return;
-        }
-
-        for (auto &cur : updated)
-        {
-            m_processor[cur] = IMonochromer::create(cur, m_conversions);
-            updatedImageData[cur] = m_processor[cur]->process();
-        }
-
-        printf("New images, %zu updated\n", updated.size());
-        std::lock_guard lock(m_mutex);
-        auto newData = *m_currentImages;
-
-        unsigned i = 0;
-        for (const auto &[k,v] : updatedImageData)
-        {
-            newData.emplace(i++, std::vector<uint8_t>(v.begin(), v.end()));
-        }
-
-        // Create a new set, which gets used the next time getImages() is called
-        m_currentImages = nullptr;
-        m_currentImages = std::make_shared<IndexToRaw>(newData);
-    }
-
-    std::thread m_updateThread;
     std::unique_ptr<IFilesystemMonitor> m_monitor;
     std::map<std::filesystem::path, std::unique_ptr<IMonochromer>> m_processor;
     std::map<std::filesystem::path, std::span<uint8_t>> m_imageData;
 
-    std::shared_ptr<IndexToRaw> m_currentImages{std::make_shared<IndexToRaw>()};
-
     std::vector<std::string> m_conversions;
-    std::mutex m_mutex;
 };
 
 class Main
@@ -105,13 +78,13 @@ public:
 
     void run()
     {
+        m_files = m_converter->updateFiles();
+
         m_current = 0;
         bool motionChange = false;
         auto sleepAfterDraw = true;
         while (true)
         {
-            auto images = m_converter->getImages();
-
             auto delta = 0u;
             if (motionChange && m_motionSensor->hasMotion())
             {
@@ -120,16 +93,18 @@ public:
             }
             else if (!motionChange) // timeout
             {
+                m_files = m_converter->updateFiles();
+
                 // Skip to the next image
                 delta = 1;
                 sleepAfterDraw = true;
             }
 
-            m_current = (m_current + delta) % images->size();
+            m_current = (m_current + delta) % m_files.size();
 
-            if (images->contains(m_current))
+            if (auto img = m_converter->getImage(m_files[m_current]))
             {
-                m_display->drawImage(images->at(m_current));
+                m_display->drawImage(*img);
             }
 
             if (sleepAfterDraw)
@@ -139,7 +114,7 @@ public:
             else
             {
                 motionChange = m_motionSemaphore.try_acquire_for(10s);
-                if (motionChange && m_motionSensor->hasMotion())
+                if (motionChange)
                 {
                     // Movement, so go to next
                     continue;
@@ -160,6 +135,7 @@ private:
     std::binary_semaphore m_motionSemaphore{0};
     std::unique_ptr<IIRSensor::ICookie> m_motionCookie;
 
+    std::vector<std::filesystem::path> m_files;
     unsigned m_current{0};
 };
 
