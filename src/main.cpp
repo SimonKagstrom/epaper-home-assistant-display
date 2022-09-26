@@ -42,7 +42,7 @@ public:
         });
     }
 
-    const std::shared_ptr<IndexToRaw> getImages()
+    std::shared_ptr<IndexToRaw> getImages()
     {
         std::lock_guard lock(m_mutex);
 
@@ -52,7 +52,7 @@ public:
 private:
     void updateFiles()
     {
-        std::map<std::filesystem::path, std::span<uint8_t>> updatedImageData;
+        std::vector<std::span<uint8_t>> updatedImageData;
 
         auto updated = m_monitor->getUpdatedFiles();
         if (updated.empty())
@@ -63,7 +63,7 @@ private:
         for (auto &cur : updated)
         {
             m_processor[cur] = IMonochromer::create(cur, m_conversions);
-            updatedImageData[cur] = m_processor[cur]->process();
+            updatedImageData.push_back(m_processor[cur]->process());
         }
 
         printf("New images, %zu updated\n", updated.size());
@@ -71,7 +71,7 @@ private:
         auto newData = *m_currentImages;
 
         unsigned i = 0;
-        for (const auto &[k,v] : updatedImageData)
+        for (const auto &v : updatedImageData)
         {
             newData.emplace(i++, std::vector<uint8_t>(v.begin(), v.end()));
         }
