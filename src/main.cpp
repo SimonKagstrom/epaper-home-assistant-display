@@ -114,7 +114,7 @@ public:
             else
             {
                 motionChange = m_motionSemaphore.try_acquire_for(10s);
-                if (motionChange)
+                if (motionChange && m_motionSensor->hasMotion())
                 {
                     // Movement, so go to next
                     continue;
