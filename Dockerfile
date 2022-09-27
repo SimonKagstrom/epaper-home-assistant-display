@@ -15,6 +15,7 @@ ENV BUILD_DEPS="build-base \
 "
 
 RUN apk add --no-cache zlib-dev
+RUN apk add --no-cache libpng
 RUN apk add --no-cache ${BUILD_DEPS}
 
 ENV LIBRARY_PATH=/lib:/usr/lib
@@ -31,7 +32,6 @@ RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make
 RUN cp /tmp/build/epaper-display /usr/bin
 
 RUN apk del ${BUILD_DEPS}
-RUN apk add --no-cache libpng
 RUN rm -rf /src /tmp/build /usr/include/
 
 CMD /usr/bin/epaper-display ${SRC_DIR} "${CONVERSIONS}"
