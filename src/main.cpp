@@ -85,22 +85,20 @@ public:
         auto sleepAfterDraw = true;
         while (true)
         {
-            auto delta = 0u;
             if (motionChange && m_motionSensor->hasMotion())
             {
-                delta = 1;
+                // Skip to the next image
                 sleepAfterDraw = false;
+                m_current = (m_current + 1) % m_files.size();
             }
             else if (!motionChange) // timeout
             {
                 m_files = m_converter->updateFiles();
 
-                // Skip to the next image
-                delta = 1;
+                // Display the first image
+                m_current = 0;
                 sleepAfterDraw = true;
             }
-
-            m_current = (m_current + delta) % m_files.size();
 
             if (auto img = m_converter->getImage(m_files[m_current]))
             {
