@@ -80,30 +80,64 @@ public:
     {
         m_files = m_converter->updateFiles();
 
-        m_current = 0;
+        unsigned current = 0;
+
+        std::map<unsigned, std::span<uint8_t>> prepared;
+
+        m_files = m_converter->updateFiles();
+        if (auto img = m_converter->getImage(m_files[current]))
+        {
+            prepared[current] = *img;
+        }
+
         bool motionChange = false;
         auto sleepAfterDraw = true;
         while (true)
         {
             if (motionChange && m_motionSensor->hasMotion())
             {
+                unsigned next = (current + 1) % m_files.size();
+
                 // Skip to the next image
                 sleepAfterDraw = false;
-                m_current = (m_current + 1) % m_files.size();
+                current = next;
             }
             else if (!motionChange) // timeout
             {
                 m_files = m_converter->updateFiles();
 
+                prepared.clear();
+                printf("Preparing\n");
+                for (auto i = 0u; i < m_files.size(); i++)
+                {
+                    if (auto img = m_converter->getImage(m_files[i]))
+                    {
+                        prepared[i] = *img;
+                    }
+                }
+
                 // Display the first image
-                m_current = 0;
+                current = 0;
                 sleepAfterDraw = true;
             }
 
-            if (auto img = m_converter->getImage(m_files[m_current]))
+            if (!prepared.contains(current))
             {
-                m_display->drawImage(*img);
+                printf("Image %u not loaded. Should really never happen\n", current);
+                if (auto img = m_converter->getImage(m_files[current]))
+                {
+                    m_display->drawImage(*img);
+                    prepared[current] = *img;
+                }
             }
+            else
+            {
+                printf("Image %u already loaded\n", current);
+                auto img = prepared[current];
+                m_display->drawImage(img);
+            }
+
+            m_display->flip();
 
             if (sleepAfterDraw)
             {
@@ -127,6 +161,7 @@ public:
     }
 
 private:
+
     std::unique_ptr<IEpaperDisplay> m_display{IEpaperDisplay::create()};
     std::unique_ptr<Converter> m_converter;
     std::unique_ptr<IIRSensor> m_motionSensor{IIRSensor::create()};
@@ -134,7 +169,6 @@ private:
     std::unique_ptr<IIRSensor::ICookie> m_motionCookie;
 
     std::vector<std::filesystem::path> m_files;
-    unsigned m_current{0};
 };
 
 }
