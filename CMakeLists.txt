@@ -24,6 +24,7 @@ PUBLIC
 
 
 add_executable(epaper-display
+    src/converter.cpp
     src/epaper_display.cpp
     src/filesystem_monitor.cpp
     src/ir_sensor.cpp
@@ -47,4 +48,25 @@ target_link_libraries(epaper-display
 target_compile_definitions(epaper-display
 PUBLIC
     -Dcimg_display=0
+)
+
+
+# A test program to check the monochromer
+add_executable(monochromer-only
+    src/converter.cpp
+    src/filesystem_monitor.cpp
+    src/main-monochromer.cpp
+    src/monochromer.cpp
+)
+
+set_property(TARGET monochromer-only PROPERTY CXX_STANDARD 20)
+
+target_compile_definitions(monochromer-only
+PUBLIC
+    -Dcimg_display=0
+)
+
+target_link_libraries(monochromer-only
+    png
+    fmt
 )

@@ -1,7 +1,7 @@
 #include "monochromer.h"
 #include "epaper_display.h"
 #include "ir_sensor.h"
-#include "filesystem_monitor.h"
+#include "converter.h"
 
 #include "utils.hh"
 
@@ -17,50 +17,6 @@ using namespace std::chrono_literals;
 
 namespace
 {
-
-class Converter
-{
-public:
-    explicit Converter(const std::filesystem::path &directory, const std::vector<std::string> &conversions) :
-        m_monitor(IFilesystemMonitor::create(directory)),
-        m_conversions(conversions)
-    {
-    }
-
-    std::vector<std::filesystem::path> updateFiles()
-    {
-        auto out = std::vector<std::filesystem::path>();
-
-        for (auto &cur : m_monitor->getUpdatedFiles())
-        {
-            m_processor[cur] = IMonochromer::create(cur, m_conversions);
-            m_imageData[cur] = m_processor[cur]->process();
-        }
-
-        for (const auto &[k,v] : m_imageData)
-        {
-            out.push_back(k);
-        }
-
-        return out;
-    }
-
-    std::optional<std::span<uint8_t>> getImage(const std::filesystem::path &image)
-    {
-        if (m_imageData.contains(image))
-        {
-            return m_imageData[image];
-        }
-        return {};
-    }
-
-private:
-    std::unique_ptr<IFilesystemMonitor> m_monitor;
-    std::map<std::filesystem::path, std::unique_ptr<IMonochromer>> m_processor;
-    std::map<std::filesystem::path, std::span<uint8_t>> m_imageData;
-
-    std::vector<std::string> m_conversions;
-};
 
 class Main
 {

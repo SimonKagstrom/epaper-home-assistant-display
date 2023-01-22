@@ -13,5 +13,7 @@ public:
 
     virtual std::span<uint8_t> process() = 0;
 
+    virtual void storeToPng(const std::string &destination) = 0;
+
     static std::unique_ptr<IMonochromer> create(const std::string &filename, const std::vector<std::string> &conversions);
 };

@@ -59,6 +59,8 @@ public:
 
     std::span<uint8_t> process() final;
 
+    void storeToPng(const std::string &destination) final;
+
 private:
     CImg<unsigned char> m_inputImage;
     std::vector<uint8_t> m_processedImage;
@@ -136,6 +138,19 @@ Monochromer::Monochromer(const std::string &filename, const std::vector<std::str
         }
 
         auto k = v[1];
+
+        if (k.size() < 2)
+        {
+            continue;
+        }
+
+        auto even_out = false;
+        if (v[0][0] == '~')
+        {
+            v[0] = v[0].substr(1, v[0].size());
+            even_out = true;
+        }
+
         auto value = string_to_integer(v[0],16);
 
         if (k == "vertical")
@@ -161,6 +176,18 @@ Monochromer::Monochromer(const std::string &filename, const std::vector<std::str
         if (k == "dotted")
         {
             m_conversions[value] = convertDotted;
+        }
+
+        if (even_out)
+        {
+            for (auto i = 1u; i <= 8; i++)
+            {
+                auto next = value + 0x010101 * i;
+                auto prev = value - 0x010101 * i;
+
+                m_conversions[next] = m_conversions[value];
+                m_conversions[prev] = m_conversions[value];
+            }
         }
     }
 }
@@ -210,6 +237,40 @@ std::span<uint8_t> Monochromer::process()
     }
 
     return {m_processedImage.data(), m_processedImage.size()};
+}
+
+void Monochromer::storeToPng(const std::string &path)
+{
+    printf("%s\n", path.c_str());
+    constexpr auto blackLimit = static_cast<int>(255 * 3 * 0.94);
+    const Color white(255,255,255);
+    const Color black(0, 0, 0);
+
+    auto out = CImg<unsigned char>(m_inputImage.width(), 480, 1, 3, 0);
+
+    for (auto r = m_inputImage.height() - 480u; r < m_inputImage.height(); r++)
+    {
+        uint8_t curByte = 0;
+        int bit = 0;
+
+        for (auto c = 0u; c < m_inputImage.width(); c++)
+        {
+            auto curColor = Color::atImage(m_inputImage, c, r);
+
+            auto color = white;
+            if (m_conversions.contains(curColor.value()))
+            {
+                color = m_conversions[curColor.value()](c, r);
+            }
+            else if (curColor.r + curColor.g + curColor.b < blackLimit)
+            {
+                color = black;
+            }
+
+            out.draw_point(c, r, color.toArray().data());
+        }
+    }
+    out.save(path.c_str());
 }
 
 
