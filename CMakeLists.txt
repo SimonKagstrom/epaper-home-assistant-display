@@ -52,7 +52,7 @@ PUBLIC
 
 
 # A test program to check the monochromer
-add_executable(monochromer-only
+add_executable(monochromer-only EXCLUDE_FROM_ALL
     src/converter.cpp
     src/filesystem_monitor.cpp
     src/main-monochromer.cpp
@@ -69,4 +69,14 @@ PUBLIC
 target_link_libraries(monochromer-only
     png
     fmt
+)
+
+target_include_directories(monochromer-only
+PUBLIC
+    /usr/local/include/
+)
+
+target_link_directories(monochromer-only
+PUBLIC
+    /usr/local/lib
 )
