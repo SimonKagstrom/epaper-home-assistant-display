@@ -16,7 +16,7 @@ services:
     privileged: true
     environment:
       - SRC_DIR=/mnt/
-      - CONVERSIONS=db4437=horizontal 43a047=dotted ffa600=rightslant 03a9f4=solid 7f7f7f=rightslant
+      - CONVERSIONS=db4437=horizontal 43a047=dotted ffa600=rightslant 03a9f4=solid 7f7f7f=rightslant 8e8e8e=rightslant 8c8c8c=rightslant 898989=rightslant fdd93c=dotted d5e8eb=dotted 44749e=leftslant a6c8e0=leftslant
     volumes:
       - "image-dir:/mnt/"
 
