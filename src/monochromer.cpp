@@ -7,48 +7,47 @@
 
 #include "utils.hh"
 
-using namespace cimg_library; 
+using namespace cimg_library;
 
 namespace
 {
 
-class Color
-{
-public:
-    Color(int _r, int _g, int _b) :
-        r(_r),
-        g(_g),
-        b(_b)
+    class Color
     {
-    }
+    public:
+        Color(int _r, int _g, int _b) : r(_r),
+                                        g(_g),
+                                        b(_b)
+        {
+        }
 
-    ~Color() = default;
+        ~Color() = default;
 
-    static Color atImage(const CImg<unsigned char> &img, int col, int row)
-    {
-        auto r = img(col,row,0, 0);
-        auto g = img(col,row,0, 1);
-        auto b = img(col,row,0, 2);
+        static Color atImage(const CImg<unsigned char> &img, int col, int row)
+        {
+            auto r = img(col, row, 0, 0);
+            auto g = img(col, row, 0, 1);
+            auto b = img(col, row, 0, 2);
 
-        return Color(r,g,b);
-    }
+            return Color(r, g, b);
+        }
 
-    bool operator<=>(const Color &other) const = default;
+        bool operator<=>(const Color &other) const = default;
 
-    uint32_t value() const
-    {
-        return (r << 16) | (g << 8) | b;
-    }
+        uint32_t value() const
+        {
+            return (r << 16) | (g << 8) | b;
+        }
 
-    std::array<int, 3> toArray() const
-    {
-        return {r,g,b};
-    }
+        std::array<int, 3> toArray() const
+        {
+            return {r, g, b};
+        }
 
-    int r;
-    int g;
-    int b;
-};
+        int r;
+        int g;
+        int b;
+    };
 
 }
 
@@ -123,8 +122,7 @@ private:
     std::map<unsigned long, std::function<Color(int x, int y)>> m_conversions;
 };
 
-Monochromer::Monochromer(const std::string &filename, const std::vector<std::string> &conversions) :
-    m_inputImage(CImg(filename.c_str()))
+Monochromer::Monochromer(const std::string &filename, const std::vector<std::string> &conversions) : m_inputImage(CImg(filename.c_str()))
 {
     m_processedImage.reserve((m_inputImage.width() * m_inputImage.height()) / 8);
 
@@ -151,7 +149,7 @@ Monochromer::Monochromer(const std::string &filename, const std::vector<std::str
             even_out = true;
         }
 
-        auto value = string_to_integer(v[0],16);
+        auto value = string_to_integer(v[0], 16);
 
         if (k == "vertical")
         {
@@ -195,7 +193,7 @@ Monochromer::Monochromer(const std::string &filename, const std::vector<std::str
 std::span<uint8_t> Monochromer::process()
 {
     constexpr auto blackLimit = static_cast<int>(255 * 3 * 0.94);
-    const Color white(255,255,255);
+    const Color white(255, 255, 255);
     const Color black(0, 0, 0);
 
     m_processedImage.clear();
@@ -220,7 +218,7 @@ std::span<uint8_t> Monochromer::process()
 
             if (color == white)
             {
-                curByte |= (1 << (7-bit));
+                curByte |= (1 << (7 - bit));
             }
 
             if (++bit >= 8)
@@ -243,12 +241,12 @@ void Monochromer::storeToPng(const std::string &path)
 {
     printf("%s\n", path.c_str());
     constexpr auto blackLimit = static_cast<int>(255 * 3 * 0.94);
-    const Color white(255,255,255);
+    const Color white(255, 255, 255);
     const Color black(0, 0, 0);
 
     auto out = CImg<unsigned char>(m_inputImage.width(), 480, 1, 3, 0);
 
-    for (auto r = m_inputImage.height() - 480u; r < m_inputImage.height(); r++)
+    for (auto r = 56; r < std::min(480 + 56, m_inputImage.height()); r++)
     {
         uint8_t curByte = 0;
         int bit = 0;
@@ -272,7 +270,6 @@ void Monochromer::storeToPng(const std::string &path)
     }
     out.save(path.c_str());
 }
-
 
 std::unique_ptr<IMonochromer> IMonochromer::create(const std::string &filename, const std::vector<std::string> &conversions)
 {
