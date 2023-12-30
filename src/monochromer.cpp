@@ -197,7 +197,7 @@ std::span<uint8_t> Monochromer::process()
     const Color black(0, 0, 0);
 
     m_processedImage.clear();
-    for (auto r = m_inputImage.height() - 480u; r < m_inputImage.height(); r++)
+    for (auto r = 56u; r < m_inputImage.height(); r++)
     {
         uint8_t curByte = 0;
         int bit = 0;
@@ -246,19 +246,19 @@ void Monochromer::storeToPng(const std::string &path)
 
     auto out = CImg<unsigned char>(m_inputImage.width(), 480, 1, 3, 0);
 
-    for (auto r = 56; r < std::min(480 + 56, m_inputImage.height()); r++)
+    for (auto r = 0; r < std::min(480, m_inputImage.height()); r++)
     {
         uint8_t curByte = 0;
         int bit = 0;
 
         for (auto c = 0u; c < m_inputImage.width(); c++)
         {
-            auto curColor = Color::atImage(m_inputImage, c, r);
+            auto curColor = Color::atImage(m_inputImage, c, r + 56);
 
             auto color = white;
             if (m_conversions.contains(curColor.value()))
             {
-                color = m_conversions[curColor.value()](c, r);
+                color = m_conversions[curColor.value()](c, r + 56);
             }
             else if (curColor.r + curColor.g + curColor.b < blackLimit)
             {

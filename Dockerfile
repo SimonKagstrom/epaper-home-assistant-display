@@ -28,7 +28,7 @@ RUN wget -O /tmp/CImg_latest.zip http://cimg.eu/files/CImg_latest.zip && cd /tmp
 RUN echo "Raspbian          " > /etc/issue
 
 ADD . /src
-RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make
+RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make && strip /tmp/build/epaper-display
 RUN cp /tmp/build/epaper-display /usr/bin
 
 RUN apk del ${BUILD_DEPS}

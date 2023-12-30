@@ -88,8 +88,8 @@ public:
     {
         printf("Draw\n");
         awake();
-        WriteNEWImage(data.data());
-//        EPD_7IN5_V2_Display(data.data());
+//        WriteNEWImage(data.data());
+        EPD_7IN5_V2_Display(data.data());
     }
 
     void flip() final
