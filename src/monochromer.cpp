@@ -240,34 +240,33 @@ std::span<uint8_t> Monochromer::process()
 void Monochromer::storeToPng(const std::string &path)
 {
     printf("%s\n", path.c_str());
-    constexpr auto blackLimit = static_cast<int>(255 * 3 * 0.94);
     const Color white(255, 255, 255);
     const Color black(0, 0, 0);
 
     auto out = CImg<unsigned char>(m_inputImage.width(), 480, 1, 3, 0);
 
-    for (auto r = 0; r < std::min(480, m_inputImage.height()); r++)
+    // Convert to black and white bit field
+    auto data = process();
+
+    for (auto r = 0; r < 480; r++)
     {
-        uint8_t curByte = 0;
-        int bit = 0;
-
-        for (auto c = 0u; c < m_inputImage.width(); c++)
+        for (auto c = 0; c < m_inputImage.width(); c++)
         {
-            auto curColor = Color::atImage(m_inputImage, c, r + 56);
+            // Assume black
+            auto color = black;
+            auto curByte = data[(r * m_inputImage.width() + c) / 8];
+            auto bit = (r * m_inputImage.width() + c) % 8;
 
-            auto color = white;
-            if (m_conversions.contains(curColor.value()))
+            // White if the bit is set
+            if (curByte & (1 << (7 - bit)))
             {
-                color = m_conversions[curColor.value()](c, r + 56);
-            }
-            else if (curColor.r + curColor.g + curColor.b < blackLimit)
-            {
-                color = black;
+                color = white;
             }
 
             out.draw_point(c, r, color.toArray().data());
         }
     }
+
     out.save(path.c_str());
 }
 
