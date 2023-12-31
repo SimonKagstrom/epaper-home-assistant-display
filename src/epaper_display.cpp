@@ -16,11 +16,11 @@ void SendCommand(UBYTE Reg)
     DEV_Digital_Write(EPD_CS_PIN, 1);
 }
 
-void SendData(UBYTE Data)
+void SendData(UBYTE *pData, UDOUBLE len)
 {
     DEV_Digital_Write(EPD_DC_PIN, 1);
     DEV_Digital_Write(EPD_CS_PIN, 0);
-    DEV_SPI_WriteByte(Data);
+    DEV_SPI_Write_nByte(pData, len);
     DEV_Digital_Write(EPD_CS_PIN, 1);
 }
 
@@ -33,7 +33,7 @@ void WaitUntilIdle(void)
 }
 
 
-void WriteNEWImage(const UBYTE *blackimage)
+void WriteImage(const UBYTE *blackimage)
 {
     UDOUBLE Width, Height;
     Width =(EPD_7IN5_V2_WIDTH % 8 == 0)?(EPD_7IN5_V2_WIDTH / 8 ):(EPD_7IN5_V2_WIDTH / 8 + 1);
@@ -43,9 +43,7 @@ void WriteNEWImage(const UBYTE *blackimage)
 
     SendCommand(0x13);
     for (UDOUBLE j = 0; j < Height; j++) {
-        for (UDOUBLE i = 0; i < Width; i++) {
-            SendData(~blackimage[i + j * Width]);
-        }
+        SendData((UBYTE *)(blackimage+j*Width), Width);
     }
 }
 
@@ -66,7 +64,8 @@ public:
         {
             exit(1);
         }
-        EPD_7IN5_V2_Init();
+        // The fast init makes image switches take around 3 seconds
+        EPD_7IN5_V2_Init_Fast();
     }
 
     ~EpaperDisplay() final
@@ -88,8 +87,7 @@ public:
     {
         printf("Draw\n");
         awake();
-//        WriteNEWImage(data.data());
-        EPD_7IN5_V2_Display(data.data());
+        WriteImage(data.data());
     }
 
     void flip() final
@@ -109,7 +107,7 @@ private:
     {
         if (m_asleep)
         {
-            EPD_7IN5_V2_Init();
+            EPD_7IN5_V2_Init_Fast();
             m_asleep = false;
         }
     }
