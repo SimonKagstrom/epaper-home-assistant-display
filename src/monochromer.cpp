@@ -216,7 +216,7 @@ std::span<uint8_t> Monochromer::process()
                 color = black;
             }
 
-            if (color == white)
+            if (color == black)
             {
                 curByte |= (1 << (7 - bit));
             }
@@ -252,15 +252,15 @@ void Monochromer::storeToPng(const std::string &path)
     {
         for (auto c = 0; c < m_inputImage.width(); c++)
         {
-            // Assume black
-            auto color = black;
+            // Assume  white
+            auto color = white;
             auto curByte = data[(r * m_inputImage.width() + c) / 8];
             auto bit = (r * m_inputImage.width() + c) % 8;
 
-            // White if the bit is set
+            // Black if the bit is set
             if (curByte & (1 << (7 - bit)))
             {
-                color = white;
+                color = black;
             }
 
             out.draw_point(c, r, color.toArray().data());

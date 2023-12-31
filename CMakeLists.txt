@@ -24,12 +24,12 @@ PUBLIC
 
 
 add_executable(epaper-display
+    src/monochromer.cpp
     src/converter.cpp
     src/epaper_display.cpp
     src/filesystem_monitor.cpp
     src/ir_sensor.cpp
     src/main.cpp
-    src/monochromer.cpp
 )
 set_property(TARGET epaper-display PROPERTY CXX_STANDARD 20)
 
