@@ -1,4 +1,4 @@
-FROM balenalib/raspberry-pi-alpine:3.16
+FROM balenalib/raspberry-pi-alpine:3.18
 
 RUN apk --no-cache upgrade
 RUN apk add --no-cache python3 py3-pip wiringpi fmt
@@ -7,6 +7,7 @@ ENV BUILD_DEPS="build-base \
                 cmake \
                 make \
                 g++ \
+                libgpiod-dev \
                 python3-dev \
                 jpeg-dev \
                 libpng-dev \
@@ -28,7 +29,7 @@ RUN wget -O /tmp/CImg_latest.zip http://cimg.eu/files/CImg_latest.zip && cd /tmp
 RUN echo "Raspbian          " > /etc/issue
 
 ADD . /src
-RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make && strip /tmp/build/epaper-display
+RUN cmake -B /tmp/build -DCMAKE_BUILD_TYPE=Release /src && cd /tmp/build && make -j2 && strip /tmp/build/epaper-display
 RUN cp /tmp/build/epaper-display /usr/bin
 
 RUN apk del ${BUILD_DEPS}
