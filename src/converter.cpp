@@ -10,10 +10,14 @@ std::vector<std::filesystem::path> Converter::updateFiles()
 {
     auto out = std::vector<std::filesystem::path>();
 
+    m_imageData.clear();
+
     for (auto &cur : m_monitor->getUpdatedFiles())
     {
         m_processor[cur] = IMonochromer::create(cur, m_conversions);
-        m_imageData[cur] = m_processor[cur]->process();
+        auto s = m_processor[cur]->process();
+
+        m_imageData[cur] = std::vector<uint8_t>(s.data(), s.data() + s.size());
     }
 
     for (const auto &[k,v] : m_imageData)
@@ -28,7 +32,7 @@ std::optional<std::span<uint8_t>> Converter::getImage(const std::filesystem::pat
 {
     if (m_imageData.contains(image))
     {
-        return m_imageData[image];
+        return std::span<uint8_t>{m_imageData[image].data(), m_imageData[image].size()};
     }
     return {};
 }

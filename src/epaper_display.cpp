@@ -85,7 +85,6 @@ public:
 
     void drawImage(std::span<uint8_t> data) final
     {
-        printf("Draw\n");
         awake();
         WriteImage(data.data());
     }

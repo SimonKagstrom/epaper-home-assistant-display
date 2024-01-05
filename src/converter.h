@@ -20,7 +20,7 @@ public:
 private:
     std::unique_ptr<IFilesystemMonitor> m_monitor;
     std::map<std::filesystem::path, std::unique_ptr<IMonochromer>> m_processor;
-    std::map<std::filesystem::path, std::span<uint8_t>> m_imageData;
+    std::map<std::filesystem::path, std::vector<uint8_t>> m_imageData;
 
     std::vector<std::string> m_conversions;
 };

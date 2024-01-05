@@ -5,7 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(epd
     waveshare-lib/RaspberryPi_JetsonNano/c/lib/Config/DEV_Config.c
-    waveshare-lib/RaspberryPi_JetsonNano/c/lib/Config/RPI_sysfs_gpio.c
+#    waveshare-lib/RaspberryPi_JetsonNano/c/lib/Config/RPI_sysfs_gpio.c
     waveshare-lib/RaspberryPi_JetsonNano/c/lib/Config/dev_hardware_SPI.c
     waveshare-lib/RaspberryPi_JetsonNano/c/lib/e-Paper/EPD_7in5_V2.c
 )

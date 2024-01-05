@@ -34,18 +34,7 @@ public:
 
     void run()
     {
-        m_files = m_converter->updateFiles();
-
         unsigned current = 0;
-
-        std::map<unsigned, std::span<uint8_t>> prepared;
-
-        m_files = m_converter->updateFiles();
-        if (auto img = m_converter->getImage(m_files[current]))
-        {
-            prepared[current] = *img;
-        }
-
         bool motionChange = false;
         auto sleepAfterDraw = true;
         while (true)
@@ -60,37 +49,27 @@ public:
             }
             else if (!motionChange) // timeout
             {
-                m_files = m_converter->updateFiles();
-
-                prepared.clear();
-                printf("Preparing\n");
-                for (auto i = 0u; i < m_files.size(); i++)
-                {
-                    if (auto img = m_converter->getImage(m_files[i]))
-                    {
-                        prepared[i] = *img;
-                    }
-                }
-
                 // Display the first image
                 current = 0;
                 sleepAfterDraw = true;
             }
 
-            if (!prepared.contains(current))
+            if (current == 0)
             {
-                printf("Image %u not loaded. Should really never happen\n", current);
-                if (auto img = m_converter->getImage(m_files[current]))
-                {
-                    m_display->drawImage(*img);
-                    prepared[current] = *img;
-                }
+                printf("Updating image data\n");
+                m_files = m_converter->updateFiles();
+            }
+
+
+            printf("Drawing image %u\n", current);
+            if (auto img = m_converter->getImage(m_files[current]))
+            {
+                m_display->drawImage(*img);
             }
             else
             {
-                printf("Image %u already loaded\n", current);
-                auto img = prepared[current];
-                m_display->drawImage(img);
+                printf("No image %u?\n", current);
+                continue;
             }
 
             m_display->flip();
